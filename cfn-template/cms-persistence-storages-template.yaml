@@ -1,0 +1,62 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: HeadlessCMS Persistence Storages
+
+Parameters:
+  RegionName:
+    Type: String
+    Default: ap-northeast-1
+
+  ProjectName:
+    Type: String
+    Default: headless-cms
+
+  Stage:
+    Type: String
+    AllowedValues:
+      - prod
+      - dev
+
+  AWSAccount:
+    Type: String
+
+Resources:
+  S3BucketforOperation:
+    Type: 'AWS::S3::Bucket'
+    #DeletionPolicy: Retain
+    Properties:
+      BucketName:
+        !Join [-, [!Ref ProjectName, 'operation', !Ref Stage, !Ref AWSAccount]]
+
+  S3BucketforDeply:
+    Type: 'AWS::S3::Bucket'
+    Properties:
+      BucketName:
+        !Join [
+          -,
+          [
+            !Ref ProjectName,
+            'backend-deploy-for-lambda',
+            !Ref Stage,
+            !Ref AWSAccount,
+          ],
+        ]
+
+  HeadlessCMSDynamoDBTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName:
+        Fn::Join:
+          - '-'
+          - - Ref: ProjectName
+            - headless-cms
+            - Ref: Stage
+      AttributeDefinitions:
+        - AttributeName: ArticleID
+          AttributeType: S
+      KeySchema:
+        - AttributeName: ArticleID
+          KeyType: HASH
+      BillingMode: PAY_PER_REQUEST
+      # ProvisionedThroughput:
+      #   ReadCapacityUnits: 1
+      #   WriteCapacityUnits: 1

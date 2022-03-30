@@ -1,0 +1,152 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Transform: AWS::Serverless-2016-10-31
+Description: >
+  SAM Template for HeadlessCMS
+
+Parameters:
+  RegionName:
+    Type: String
+    Default: ap-northeast-1
+
+  ProjectName:
+    Type: String
+    Default: headless-cms
+
+  Stage:
+    Type: String
+    AllowedValues:
+      - prod
+      - dev
+
+  AWSAccount:
+    Type: String
+
+# More info about Globals: https://github.com/awslabs/serverless-application-model/blob/master/docs/globals.rst
+Globals:
+  Function:
+    Timeout: 30
+  Api:
+    Name: !Join [-, [!Ref ProjectName, "Backend-Api", !Ref Stage]]
+    Cors:
+        AllowMethods: "'DELETE,GET,HEAD,OPTIONS,PATCH,POST,PUT'"
+        #AllowMethods: Optional. String containing the HTTP methods to allow. 
+        # For example, "'GET,POST,DELETE'". If you omit this property, then SAM will automatically allow all the methods configured for each API. 
+        # Checkout [HTTP Spec](https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Access-Control-Allow-Methods) more details on the value.
+
+        AllowHeaders: "'Content-Type,Authorization,X-Amz-Date,X-Api-Key,X-Amz-Security-Token'"
+        #AllowHeaders: Optional. String of headers to allow. 
+        # For example, "'X-Forwarded-For'". Checkout [HTTP Spec](https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Access-Control-Allow-Headers) for more details on the value
+
+        AllowOrigin: "'*'"
+        #AllowOrigin: Required. String of origin to allow. 
+        # For example, "'www.example.com'". Checkout [HTTP Spec](https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Access-Control-Allow-Origin) for more details on this value.
+
+        #MaxAge: Optional. String containing the number of seconds to cache CORS Preflight request. 
+        # For example, "'600'" will cache request for 600 seconds. Checkout [HTTP Spec](https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Access-Control-Max-Age) for more details on this value
+
+        #AllowCredentials: Optional. Boolean indicating whether request is allowed to contain credentials.
+        # Header is omitted when false. Checkout [HTTP Spec](https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Access-Control-Allow-Credentials) for more details on this value.
+Resources:
+   # -------------------------------------------------------
+  # Lambda Layer
+  # -------------------------------------------------------
+  LambdaLayer:
+    Type: AWS::Serverless::LayerVersion
+    Properties:
+      Description: Make Function by CloudFormation
+      LayerName:   !Join [-, [!Ref ProjectName, 'layer',!Ref Stage]]
+      Description: !Join [-, [!Ref ProjectName, 'layer',!Ref Stage]]
+      ContentUri: ../LambdaLayer/
+      CompatibleRuntimes:
+        - nodejs12.x
+      LicenseInfo: 'MIT'
+      RetentionPolicy: Retain
+
+  # -------------------------------------------------------
+  # Lambda function for Api
+  # -------------------------------------------------------
+  ArticleListLambda:
+    Type: AWS::Serverless::Function # More info about Function Resource: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#awsserverlessfunction
+    Properties:
+      FunctionName: !Join [-, [!Ref ProjectName, "articleListLambda", !Ref Stage]]
+      Description:  !Join [-, [!Ref ProjectName, "articleListLambda", !Ref Stage]]
+      #relative path from template.yaml folder or filename
+      CodeUri: ../LambdaFunctions/articleListLambda/
+      Handler: articleListLambda.handler
+      Runtime: nodejs12.x
+      Tracing: Active
+      Layers:
+        - !Ref LambdaLayer
+      Policies:  
+        - AWSLambdaExecute
+        - AWSLambdaBasicExecutionRole
+        - AmazonS3FullAccess
+        - AmazonDynamoDBFullAccess
+        - SSMParameterReadPolicy: #https://docs.aws.amazon.com/serverless-application-model/latest/developerguide/serverless-policy-templates.html
+           ParameterName: HeadlessCMS-DynamoDB-Name
+        - SSMParameterReadPolicy:
+           ParameterName: HeadlessCMS-S3bucket-Name
+      Events:
+        App01a:
+          Type: Api # More info about API Event Source: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#api
+          Properties:
+            Path: "/v1/getArticleList"
+            Method: get
+
+  ArticleUploadLambda:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: !Join [-, [!Ref ProjectName, "articleGetLambda", !Ref Stage]]
+      Description:  !Join [-, [!Ref ProjectName, "articleGetLambda", !Ref Stage]]
+      CodeUri: ../LambdaFunctions/articleGetLambda/
+      Handler: articleGetLambda.handler
+      Runtime: nodejs12.x
+      Tracing: Active
+      Layers:
+        - !Ref LambdaLayer
+      Policies:
+        - AWSLambdaExecute
+        - AWSLambdaBasicExecutionRole
+        - AmazonS3FullAccess
+        - AmazonDynamoDBFullAccess
+        - SSMParameterReadPolicy:
+           ParameterName: HeadlessCMS-DynamoDB-Name
+        - SSMParameterReadPolicy:
+           ParameterName: HeadlessCMS-S3bucket-Name
+      Events:
+        App01a:
+          Type: Api
+          Properties:
+            Path: "/v1/{articleid}"
+            Method: get
+
+  ArticleSetLambda:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: !Join [-, [!Ref ProjectName, "articleSetLambda", !Ref Stage]]
+      Description:  !Join [-, [!Ref ProjectName, "articleSetLambda", !Ref Stage]]
+      CodeUri: ../LambdaFunctions/articleSetLambda/
+      Handler: articleSetLambda.handler
+      Runtime: nodejs12.x
+      Tracing: Active
+      Layers:
+        - !Ref LambdaLayer
+      Policies:
+        - AWSLambdaExecute
+        - AWSLambdaBasicExecutionRole
+        - AmazonS3FullAccess
+        - AmazonDynamoDBFullAccess
+        - SSMParameterReadPolicy:
+           ParameterName: HeadlessCMS-DynamoDB-Name
+        - SSMParameterReadPolicy:
+           ParameterName: HeadlessCMS-S3bucket-Name
+      Events:
+        App01a:
+          Type: Api
+          Properties:
+            Path: "/v1/{articleid}"
+            Method: post
+# Outputs:
+#   sampleLambda:
+#     Description: "ArticleuploadLambda ARN"
+#     Value: !GetAtt ArticleuploadLambda.Arn
