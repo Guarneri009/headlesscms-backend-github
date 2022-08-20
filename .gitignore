@@ -128,4 +128,9 @@ $RECYCLE.BIN/
 *.code-workspace
 .vscode/
 
+# my repository
+.env
+cms-backend-package.yaml
+
+
 # End of https://www.gitignore.io/api/osx,node,linux,windows

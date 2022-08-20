@@ -1,0 +1,16 @@
+version: '3'
+services:
+  headlesscms-backend:
+    build:
+      context: .
+      dockerfile: '$DKF'
+    container_name: amzn-linux-2
+    privileged: true
+    tty: true
+    volumes:
+      # for linx,docker and desktop
+      - ..:/workspace:cached
+      # for amazon config
+      - type: bind
+        source: '$AWSSID'
+        target: /root/.aws
