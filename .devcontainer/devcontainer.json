@@ -1,0 +1,10 @@
+{
+  "name": "vscode",
+  "workspaceFolder": "/workspace",
+  "dockerComposeFile": "docker-compose.yml",
+  "service": "headlesscms-backend",
+  // 値は拡張機能のIDで指定します。
+  // 拡張機能のIDはどこから取るのかというと拡張機能のタブを開いた後、
+  // 歯車アイコンを押したときに出てくる「Copy Extension ID」で取得できます
+  "extensions": ["donjayamanne.githistory", "mhutchie.git-graph"]
+}
